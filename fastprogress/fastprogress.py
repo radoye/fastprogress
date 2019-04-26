@@ -115,9 +115,15 @@ class MasterBar():
     def on_iter_begin(self): self.start_t = time()
     def on_iter_end(self): pass
     def add_child(self, child): pass
-    def write(self, line):      pass
+    def write(self, line, replace=False):      pass
     def update_graph(self, graphs, x_bounds, y_bounds): pass
     def update(self, val): self.first_bar.update(val)
+
+    def _preprocess_text(self, line):
+        return "<br>".join(line.split("\n"))
+
+    def _preprocess_table(self, line):
+        return line
 
 def html_progress_bar(value, total, label, interrupted=False):
     bar_style = 'progress-bar-interrupted' if interrupted else ''
@@ -215,10 +221,15 @@ class NBMasterBar(MasterBar):
         self.html_code = '\n'.join([self.inner_dict[n] for n in to_show])
         self.out.update(HTML(self.html_code))
 
-    def write(self, line, table=False):
-        if not table: self.text += line + "<p>"
+    def write(self, line, table=False, replace=False):
+        if not table: 
+            if replace: self.text = self._preprocess_text(line)
+            # this seems to fix the annoying little bug where the first two lines
+            # are squished after the loop is finished executing
+            else: self.text += "<p>" + self._preprocess_text(line) + "</p>"
         else:
-            self.lines.append(line)
+            if replace: self.lines = self._preprocess_table(line)
+            else: self.lines.append(line)
             self.text = text2html_table(self.lines)
 
     def show_imgs(self, imgs, titles=None, cols=4, imgsize=4, figsize=None):
@@ -288,7 +299,8 @@ class ConsoleMasterBar(MasterBar):
         if SAVE_PATH is not None and os.path.exists(SAVE_PATH) and not SAVE_APPEND:
             with open(SAVE_PATH, 'w') as f: f.write('')
 
-    def write(self, line, table=False):
+    # TODO: align this with notebook version (replace/append handling)
+    def write(self, line, table=False, replace=False):
         if table:
             text = ''
             if not hasattr(self, 'names'):
