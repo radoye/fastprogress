@@ -110,6 +110,8 @@ class MasterBar():
     def __iter__(self):
         self.on_iter_begin()
         for o in self.first_bar: yield o
+        # seems to fix the main bar not flushing fully by the end 
+        self.first_bar.update(self.first_bar.total)
         self.on_iter_end()
 
     def on_iter_begin(self): self.start_t = time()
@@ -119,11 +121,11 @@ class MasterBar():
     def update_graph(self, graphs, x_bounds, y_bounds): pass
     def update(self, val): self.first_bar.update(val)
 
-    def _preprocess_text(self, line):
-        return "<br>".join(line.split("\n"))
+def _preprocess_text(line):
+    return "<br>".join(line.split("\n"))
 
-    def _preprocess_table(self, line):
-        return line
+def _preprocess_table(line):
+    return line
 
 def html_progress_bar(value, total, label, interrupted=False):
     bar_style = 'progress-bar-interrupted' if interrupted else ''
@@ -205,9 +207,10 @@ class NBMasterBar(MasterBar):
             plt.close()
             self.out2.update(self.fig)
         total_time = format_time(time() - self.start_t)
-        if self.text.endswith('<p>'): self.text = self.text[:-3]
-        if self.total_time: self.text = f'Total time: {total_time} <p>' + self.text
-        self.out.update(HTML(self.text))
+        #if self.text.endswith('<p>'): self.text = self.text[:-3]
+        #if self.total_time: self.text = f'Total time: {total_time} <p>' + self.text
+        #self.out.update(HTML(self.html_code))
+        self.show()
 
     def add_child(self, child):
         self.child = child
@@ -223,13 +226,13 @@ class NBMasterBar(MasterBar):
 
     def write(self, line, table=False, replace=False):
         if not table: 
-            if replace: self.text = self._preprocess_text(line)
+            if replace: self.text = "<div style=\"white-pace: pre-wrap\">" + _preprocess_text(line) + "</div>"
             # this seems to fix the annoying little bug where the first two lines
             # are squished after the loop is finished executing
-            else: self.text += "<p>" + self._preprocess_text(line) + "</p>"
+            else: self.text += "<div class=\"white-space: pre-wrap\">" + _preprocess_text(line) + "</div>"
         else:
-            if replace: self.lines = self._preprocess_table(line)
-            else: self.lines.append(line)
+            if replace: self.lines = _preprocess_table(line)
+            else: self.lines.append(_preprocess_table(line))
             self.text = text2html_table(self.lines)
 
     def show_imgs(self, imgs, titles=None, cols=4, imgsize=4, figsize=None):
