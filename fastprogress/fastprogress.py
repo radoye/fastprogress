@@ -122,12 +122,16 @@ class MasterBar():
     def update(self, val): self.first_bar.update(val)
 
 def _preprocess_text(line):
-    return "<br>".join(line.split("\n"))
+    #return "<br>".join(line.split("\n"))
+    return line
 
 def _preprocess_table(line):
     return line
 
 def html_progress_bar(value, total, label, interrupted=False):
+    """
+    HTMLize a single bar itself.
+    """
     bar_style = 'progress-bar-interrupted' if interrupted else ''
     return f"""
     <div>
@@ -226,10 +230,10 @@ class NBMasterBar(MasterBar):
 
     def write(self, line, table=False, replace=False):
         if not table: 
-            if replace: self.text = "<div style=\"white-pace: pre-wrap\">" + _preprocess_text(line) + "</div>"
+            if replace: self.text = "<pre>" + _preprocess_text(line) + "</pre>"
             # this seems to fix the annoying little bug where the first two lines
             # are squished after the loop is finished executing
-            else: self.text += "<div class=\"white-space: pre-wrap\">" + _preprocess_text(line) + "</div>"
+            else: self.text += "<pre>" + _preprocess_text(line) + "</pre>"
         else:
             if replace: self.lines = _preprocess_table(line)
             else: self.lines.append(_preprocess_table(line))
