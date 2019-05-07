@@ -128,6 +128,8 @@ def _preprocess_text(line):
 def _preprocess_table(line):
     return line
 
+# TODO: https://css-tricks.com/html5-progress-element/#article-header-id-11
+#       change the appearance of the bar
 def html_progress_bar(value, total, label, interrupted=False):
     """
     HTMLize a single bar itself.
@@ -145,6 +147,9 @@ def html_progress_bar(value, total, label, interrupted=False):
             }}
             .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {{
                 background: #F44336;
+            }}
+            progress[value]::-webkit-progress-bar {{
+              background-color: #eee;
             }}
         </style>
       <progress value='{value}' class='{bar_style}' max='{total}', style='width:300px; height:20px; vertical-align: middle;'></progress>
@@ -259,10 +264,18 @@ class NBMasterBar(MasterBar):
         self.ax.clear()
         if len(self.names) < len(graphs): self.names += [''] * (len(graphs) - len(self.names))
         for g,n in zip(graphs,self.names): self.ax.plot(*g, label=n)
-        self.ax.legend(loc='upper right')
+        #self.ax.legend(loc='upper right')
+        self.ax.legend(loc='lower left')
         if x_bounds is not None: self.ax.set_xlim(*x_bounds)
         if y_bounds is not None: self.ax.set_ylim(*y_bounds)
         self.out2.update(self.ax.figure)
+
+    def update_fig(self, fig):
+        if self.hide_graph: return
+        self.fig = fig
+        if not hasattr(self, "out2"): 
+            self.out2 = display(self.fig, display_id=True)
+        self.out2.update(self.fig)
 
 class ConsoleProgressBar(ProgressBar):
     fill:str='█'
@@ -323,6 +336,7 @@ class ConsoleMasterBar(MasterBar):
 
     def show_imgs(*args): pass
     def update_graph(*args): pass
+    def update_fig(*args): pass
 
 def print_and_maybe_save(line):
     WRITER_FN(line)
